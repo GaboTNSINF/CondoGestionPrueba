@@ -122,3 +122,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# --- Configuración de Autenticación Personalizada ---
+# Le decimos a Django que nuestro modelo de usuario personalizado
+# se encuentra en la app 'usuarios' y se llama 'Usuario'.
+AUTH_USER_MODEL = 'usuarios.Usuario'
