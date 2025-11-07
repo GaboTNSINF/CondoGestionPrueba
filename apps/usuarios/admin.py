@@ -2,8 +2,8 @@
 from django.contrib import admin
 # Importamos el modelo UserAdmin base, que ya sabe cómo mostrar usuarios
 from django.contrib.auth.admin import UserAdmin
-# Importamos nuestro modelo Usuario personalizado
-from .models import Usuario
+# Importamos nuestros modelos personalizados
+from .models import Usuario, UsuarioAdminCondo # <-- AÑADIDO 'UsuarioAdminCondo'
 
 # --- INICIO: Configuración del Admin para Usuario ---
 
@@ -69,3 +69,35 @@ class UsuarioAdmin(UserAdmin):
         return form
 
 # --- FIN: Configuración del Admin para Usuario ---
+
+
+# --- INICIO: Admin para UsuarioAdminCondo --- ¡NUEVO! ---
+
+@admin.register(UsuarioAdminCondo)
+class UsuarioAdminCondoAdmin(admin.ModelAdmin):
+    """
+    Configuración del admin para el modelo pivote
+    que asigna Administradores a Condominios.
+    """
+    # Campos a mostrar en la lista
+    list_display = ('id_usuario', 'id_condominio')
+    
+    # Campos por los que se puede buscar
+    # Usamos la sintaxis '__' para buscar en campos de modelos relacionados
+    search_fields = (
+        'id_usuario__email', 
+        'id_usuario__nombres', 
+        'id_condominio__nombre'
+    )
+    
+    # Filtros que aparecerán en la barra lateral
+    list_filter = ('id_condominio__nombre',)
+    
+    # Para mejorar la selección de FK (llaves foráneas)
+    # con miles de usuarios/condominios
+    raw_id_fields = ('id_usuario', 'id_condominio')
+    
+    # Orden por defecto
+    ordering = ('id_usuario__email', 'id_condominio__nombre')
+
+# --- FIN: Admin para UsuarioAdminCondo ---

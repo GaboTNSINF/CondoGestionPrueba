@@ -95,9 +95,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     y PermissionsMixin (para manejar los permisos de Django).
     """
     
-    # ID: Django crea el 'id_usuario' (BigIntegerField, Primary Key) 
-    # automáticamente como 'id', pero lo mapearemos a 'id_usuario'
-    # usando db_column en un paso futuro si es necesario. Por ahora usamos 'id'.
+    # ID: Dejamos que Django maneje el 'id' automáticamente.
+    # ¡NO AÑADIMOS 'id_usuario = models.AutoField(primary_key=True)'!
+    # Este fue el error que causó el problema.
 
     # Definimos los tipos de usuario basándonos en el ENUM del SQL
     class TipoUsuario(models.TextChoices):
@@ -205,3 +205,62 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = 'Usuarios'
 
 # --- FIN: Modelo de Usuario ---
+
+
+# --- INICIO: Modelo UsuarioAdminCondo ---
+
+class UsuarioAdminCondo(models.Model):
+    """
+    [MAPEO: Tabla 'usuario_admin_condo']
+    Esta es la tabla "pivote" o "through" que conecta a un
+    Usuario (de tipo 'admin') con los Condominios que administra.
+    """
+    
+    # NOTA ARQUITECTURAL:
+    # A diferencia del script SQL , no usamos una Clave Primaria compuesta.
+    # Django funciona mejor con una única Clave Primaria (el 'id'
+    # que se añade automáticamente).
+    # Mantenemos la lógica de 'PRIMARY KEY (id_usuario, id_condominio)'
+    # usando 'unique_together' en la Meta.
+    
+    id_usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE, # Si se borra el usuario, se borra el permiso
+        db_column='id_usuario'
+    )
+    
+    id_condominio = models.ForeignKey(
+        # --- ¡BUENA PRÁCTICA! ---
+        # Usamos una "referencia en string" ('core.Condominio')
+        # en lugar de importar el modelo Condominio directamente.
+        # Esto evita "importaciones circulares", un error común
+        # cuando las apps dependen entre sí.
+        'core.Condominio',
+        on_delete=models.CASCADE, # Si se borra el condominio, se borra el permiso
+        db_column='id_condominio'
+    )
+
+    def __str__(self):
+        # Usamos 'self.id_usuario' y 'self.id_condominio' que son los
+        # objetos FK, para poder acceder a sus nombres.
+        try:
+            # Intentamos acceder a los objetos relacionados
+            # (pueden no existir si algo está mal configurado)
+            return f"{self.id_usuario.email} administra {self.id_condominio.nombre}"
+        except Exception:
+            # Fallback por si los objetos no se pueden cargar
+            return f"Relación Admin-Condominio ID: {self.id}"
+
+
+    class Meta:
+        db_table = 'usuario_admin_condo'
+        
+        # Esto implementa la lógica de la PRIMARY KEY compuesta del SQL 
+        # Asegura que no se pueda asignar el mismo usuario al mismo
+        # condominio más de una vez.
+        unique_together = ('id_usuario', 'id_condominio')
+        
+        verbose_name = 'Admin por Condominio'
+        verbose_name_plural = 'Admins por Condominio'
+
+# --- FIN: Modelo UsuarioAdminCondo ---
