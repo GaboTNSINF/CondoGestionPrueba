@@ -1,7 +1,7 @@
 # Importamos el módulo 'admin' de Django
 from django.contrib import admin
-# Importamos los modelos que acabamos de crear
-from .models import CatTipoCuenta, Condominio
+# Importamos los modelos que hemos creado en 'core'
+from .models import CatTipoCuenta, Condominio, CatPlan, Suscripcion
 
 # --- INICIO: Admin para CatTipoCuenta ---
 
@@ -53,3 +53,55 @@ class CondominioAdmin(admin.ModelAdmin):
     ordering = ('nombre',)
 
 # --- FIN: Admin para Condominio ---
+
+
+# --- INICIO: Admin para CatPlan --- ¡NUEVO! ---
+
+@admin.register(CatPlan)
+class CatPlanAdmin(admin.ModelAdmin):
+    """
+    Configuración del admin para el Catálogo de Planes SaaS.
+    """
+    list_display = (
+        'nombre', 
+        'codigo', 
+        'precio_base_mensual', 
+        'max_condominios', 
+        'max_unidades', 
+        'es_personalizable'
+    )
+    search_fields = ('nombre', 'codigo')
+    list_filter = ('es_personalizable',)
+    ordering = ('precio_base_mensual',)
+
+# --- FIN: Admin para CatPlan ---
+
+
+# --- INICIO: Admin para Suscripcion --- ¡NUEVO! ---
+
+@admin.register(Suscripcion)
+class SuscripcionAdmin(admin.ModelAdmin):
+    """
+    Configuración del admin para las Suscripciones de los usuarios.
+    """
+    list_display = (
+        'id_usuario', 
+        'id_plan', 
+        'estado', 
+        'monto_mensual_final', 
+        'fecha_termino'
+    )
+    search_fields = (
+        'id_usuario__email', 
+        'id_usuario__nombres', 
+        'id_plan__nombre'
+    )
+    list_filter = ('estado', 'id_plan')
+    
+    # Usamos 'raw_id_fields' para el 'id_usuario' porque pueden
+    # haber miles de usuarios, y un dropdown sería muy lento.
+    raw_id_fields = ('id_usuario',)
+    
+    ordering = ('id_usuario__email',)
+
+# --- FIN: Admin para Suscripcion ---
