@@ -3,75 +3,45 @@ from django.contrib import admin
 # Importamos el modelo UserAdmin base, que ya sabe cómo mostrar usuarios
 from django.contrib.auth.admin import UserAdmin
 # Importamos nuestros modelos personalizados
-from .models import Usuario, UsuarioAdminCondo # <-- AÑADIDO 'UsuarioAdminCondo'
+from .models import (
+    Usuario, UsuarioAdminCondo, 
+    Copropietario, Residencia  # <-- ¡NUEVOS!
+)
 
 # --- INICIO: Configuración del Admin para Usuario ---
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     """
-    Esta clase le dice a Django cómo queremos mostrar y administrar
-    nuestro modelo 'Usuario' en el panel de /admin.
-    
-    Heredamos de 'UserAdmin' porque ya tiene resuelta
-    la mayoría de la lógica (como el cambio de contraseña, permisos, etc.).
+    Configuración del admin para nuestro modelo 'Usuario'.
     """
-    
-    # ¿Recuerdas los campos ('nombres', 'apellidos', etc.) que definimos
-    # en el 'UsuarioManager' para el 'createsuperuser'?
-    # Aquí tenemos que decirle al /admin qué campos mostrar al CREAR un usuario.
     add_fieldsets = UserAdmin.add_fieldsets + (
         (None, {'fields': ('rut_base', 'rut_dv', 'nombres', 'apellidos', 'tipo_usuario')}),
     )
-
-    # Y aquí le decimos qué campos mostrar al EDITAR un usuario.
-    # 'fieldsets' SOBREESCRIBE la configuración base.
     fieldsets = (
-        # El primer bloque es 'None' (sin título) y muestra el email y password
         (None, {'fields': ('email', 'password')}),
-        
-        # El segundo bloque se titula 'Información Personal'
         ('Información Personal', {'fields': ('nombres', 'apellidos', 'rut_base', 'rut_dv', 'telefono', 'direccion')}),
-        
-        # El tercer bloque es 'Permisos'
         ('Permisos', {'fields': ('is_active', 'is_staff', 'is_superuser', 'tipo_usuario', 'groups', 'user_permissions')}),
-        
-        # El cuarto bloque es 'Fechas Importantes'
         ('Fechas Importantes', {'fields': ('last_login', 'creado_at')}),
     )
-
-    # Qué campos mostrar en la LISTA de usuarios
     list_display = ('email', 'nombres', 'apellidos', 'tipo_usuario', 'is_staff', 'is_active')
-    
-    # Qué campos permitirán hacer búsquedas
     search_fields = ('email', 'nombres', 'apellidos', 'rut_base')
-    
-    # Qué campos se pueden usar para filtrar
     list_filter = ('tipo_usuario', 'is_active', 'is_staff')
-    
-    # Qué campo se usará para el login en /admin (es nuestro USERNAME_FIELD)
     ordering = ('email',)
-    
-    # Campo 'password' no se debe leer
     readonly_fields = ('last_login', 'creado_at')
-
-    # Le decimos al admin que el campo 'username' (que UserAdmin espera)
-    # no existe en nuestro modelo.
     filter_horizontal = ()
     
-    # Necesario porque sobreescribimos 'fieldsets'
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         is_superuser = request.user.is_superuser
         if not is_superuser:
-            # Si un usuario NO es superadmin, no puede editar permisos
             form.base_fields['is_superuser'].disabled = True
         return form
 
 # --- FIN: Configuración del Admin para Usuario ---
 
 
-# --- INICIO: Admin para UsuarioAdminCondo --- ¡NUEVO! ---
+# --- INICIO: Admin para UsuarioAdminCondo ---
 
 @admin.register(UsuarioAdminCondo)
 class UsuarioAdminCondoAdmin(admin.ModelAdmin):
@@ -79,25 +49,55 @@ class UsuarioAdminCondoAdmin(admin.ModelAdmin):
     Configuración del admin para el modelo pivote
     que asigna Administradores a Condominios.
     """
-    # Campos a mostrar en la lista
     list_display = ('id_usuario', 'id_condominio')
-    
-    # Campos por los que se puede buscar
-    # Usamos la sintaxis '__' para buscar en campos de modelos relacionados
     search_fields = (
         'id_usuario__email', 
         'id_usuario__nombres', 
         'id_condominio__nombre'
     )
-    
-    # Filtros que aparecerán en la barra lateral
     list_filter = ('id_condominio__nombre',)
-    
-    # Para mejorar la selección de FK (llaves foráneas)
-    # con miles de usuarios/condominios
     raw_id_fields = ('id_usuario', 'id_condominio')
-    
-    # Orden por defecto
     ordering = ('id_usuario__email', 'id_condominio__nombre')
 
 # --- FIN: Admin para UsuarioAdminCondo ---
+
+
+# --- INICIO: Admin para Relación Usuario-Unidad --- ¡NUEVO! ---
+
+@admin.register(Copropietario)
+class CopropietarioAdmin(admin.ModelAdmin):
+    """
+    Configuración del admin para el modelo Copropietario.
+    """
+    list_display = ('id_usuario', 'id_unidad', 'porcentaje', 'desde', 'hasta')
+    search_fields = (
+        'id_usuario__email', 
+        'id_usuario__nombres', 
+        'id_unidad__codigo',
+        'id_unidad__id_grupo__nombre'
+    )
+    list_filter = ('id_unidad__id_grupo__id_condominio__nombre', 'desde', 'hasta')
+    
+    # Usamos 'raw_id_fields' porque pueden haber miles de usuarios y unidades
+    raw_id_fields = ('id_usuario', 'id_unidad')
+    ordering = ('-desde',)
+
+@admin.register(Residencia)
+class ResidenciaAdmin(admin.ModelAdmin):
+    """
+    Configuración del admin para el modelo Residencia.
+    """
+    list_display = ('id_usuario', 'id_unidad', 'origen', 'desde', 'hasta')
+    search_fields = (
+        'id_usuario__email', 
+        'id_usuario__nombres', 
+        'id_unidad__codigo',
+        'id_unidad__id_grupo__nombre'
+    )
+    list_filter = ('id_unidad__id_grupo__id_condominio__nombre', 'origen', 'desde', 'hasta')
+    
+    # Usamos 'raw_id_fields' porque pueden haber miles de usuarios y unidades
+    raw_id_fields = ('id_usuario', 'id_unidad')
+    ordering = ('-desde',)
+
+# --- FIN: Admin para Relación Usuario-Unidad ---
