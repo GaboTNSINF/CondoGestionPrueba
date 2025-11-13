@@ -56,7 +56,11 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        
+        # --- LÍNEA MODIFICADA ---
+        'DIRS': [BASE_DIR / 'templates'], # Le decimos que busque en la carpeta raíz 'templates'
+        # ------------------------
+
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
