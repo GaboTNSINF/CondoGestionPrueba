@@ -1,24 +1,28 @@
 # apps/core/views.py
 from django.shortcuts import render
-# Importamos el decorador de seguridad
 from django.contrib.auth.decorators import login_required
+
+# --- IMPORTANTE: Importamos el modelo para poder buscar datos ---
+from .models import Condominio
 
 # --- INICIO: Vistas del Dashboard ---
 
-@login_required  # <--- ¡SEGURIDAD POR DEFECTO!
+@login_required
 def index_view(request):
     """
-    Esta es la vista principal (Dashboard) de la aplicación.
-    El decorador @login_required asegura que SOLO usuarios 
-    autenticados puedan ver esto. Si no, los manda al login.
+    Vista principal (Dashboard).
+    Ahora recupera los condominios de la base de datos.
     """
     
-    # Preparamos los datos que queremos enviar a la plantilla (frontend)
+    # 1. Buscamos TODOS los condominios en la base de datos
+    lista_condominios = Condominio.objects.all()
+
+    # 2. Preparamos el contexto con el usuario Y la lista
     contexto = {
-        'usuario': request.user
+        'usuario': request.user,
+        'mis_condominios': lista_condominios  # <--- Enviamos la lista al HTML
     }
     
-    # Renderizamos la plantilla 'index.html' (que crearemos en el sig. paso)
     return render(request, 'index.html', contexto)
 
 # --- FIN: Vistas del Dashboard ---
