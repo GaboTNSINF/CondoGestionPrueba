@@ -964,3 +964,108 @@ class PasarelaTx(models.Model):
         db_table = 'pasarela_tx'
 
 # --- FIN: Modelos de Pagos ---
+
+
+# --- INICIO: Modelos de RRHH ---
+
+class Trabajador(models.Model):
+    """
+    [MAPEO: Tabla 'trabajador']
+    Personal contratado por el condominio (conserjes, aseo, etc).
+    """
+    id_trabajador = models.AutoField(primary_key=True)
+    id_condominio = models.ForeignKey(
+        Condominio,
+        on_delete=models.RESTRICT,
+        db_column='id_condominio'
+    )
+    tipo = models.CharField(max_length=40) # Ej: 'Planta', 'Reemplazo'
+    rut_base = models.IntegerField()
+    rut_dv = models.CharField(max_length=1)
+    nombres = models.CharField(max_length=120)
+    apellidos = models.CharField(max_length=120)
+    cargo = models.CharField(max_length=80)
+    email = models.EmailField(max_length=120, null=True, blank=True)
+    telefono = models.CharField(max_length=40, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.nombres} {self.apellidos} ({self.cargo})"
+
+    class Meta:
+        db_table = 'trabajador'
+        unique_together = ('id_condominio', 'rut_base', 'rut_dv')
+        verbose_name = 'Trabajador'
+        verbose_name_plural = 'Trabajadores'
+
+class TrabajadorContrato(models.Model):
+    """
+    [MAPEO: Tabla 'trabajador_contrato']
+    Detalle contractual del trabajador.
+    """
+    id_contrato = models.AutoField(primary_key=True)
+    id_trabajador = models.ForeignKey(
+        Trabajador,
+        on_delete=models.CASCADE,
+        db_column='id_trabajador'
+    )
+    tipo_contrato = models.CharField(max_length=40) # Indefinido, Plazo Fijo
+    fecha_inicio = models.DateField()
+    fecha_termino = models.DateField(null=True, blank=True)
+    sueldo_base = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    jornada = models.CharField(max_length=60, null=True, blank=True)
+    documento_url = models.CharField(max_length=500, null=True, blank=True)
+
+    class Meta:
+        db_table = 'trabajador_contrato'
+        verbose_name = 'Contrato de Trabajador'
+        verbose_name_plural = 'Contratos de Trabajadores'
+
+class Remuneracion(models.Model):
+    """
+    [MAPEO: Tabla 'remuneracion']
+    Liquidación de sueldo mensual.
+    """
+    id_remuneracion = models.AutoField(primary_key=True)
+    id_trabajador = models.ForeignKey(
+        Trabajador,
+        on_delete=models.RESTRICT,
+        db_column='id_trabajador'
+    )
+
+    class TipoRemuneracion(models.TextChoices):
+        MENSUAL = 'mensual', 'Mensual'
+        FINIQUITO = 'finiquito', 'Finiquito'
+        BONO = 'bono', 'Bono'
+        RETROACTIVO = 'retroactivo', 'Retroactivo'
+        OTRO = 'otro', 'Otro'
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TipoRemuneracion.choices,
+        default=TipoRemuneracion.MENSUAL
+    )
+
+    periodo = models.CharField(max_length=6)
+
+    bruto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    imposiciones = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    descuentos = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    liquido = models.DecimalField(max_digits=12, decimal_places=2)
+
+    fecha_pago = models.DateField(null=True, blank=True)
+    id_metodo_pago = models.ForeignKey(
+        CatMetodoPago,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        db_column='id_metodo_pago'
+    )
+    comprobante_url = models.CharField(max_length=500, null=True, blank=True)
+    observacion = models.CharField(max_length=300, null=True, blank=True)
+
+    class Meta:
+        db_table = 'remuneracion'
+        unique_together = ('id_trabajador', 'periodo', 'tipo')
+        verbose_name = 'Remuneración'
+        verbose_name_plural = 'Remuneraciones'
+
+# --- FIN: Modelos de RRHH ---

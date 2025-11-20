@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.db.models import Sum
 
 # --- IMPORTANTE: Importamos los modelos para poder buscar datos ---
-from .models import Condominio, Gasto, Cobro, Pago
-from .forms import GastoForm, PagoForm
+from .models import Condominio, Gasto, Cobro, Pago, Trabajador, Remuneracion
+from .forms import GastoForm, PagoForm, TrabajadorForm, RemuneracionForm
 from .services import generar_cierre_mensual, registrar_pago
 
 # --- INICIO: Vistas del Dashboard ---
@@ -210,3 +210,83 @@ def pagos_list_view(request, condominio_id):
     return render(request, 'core/pagos_list.html', contexto)
 
 # --- FIN: Vistas de Pagos ---
+
+
+# --- INICIO: Vistas de RRHH (Trabajadores y Remuneraciones) ---
+
+@login_required
+def trabajadores_list_view(request, condominio_id):
+    """
+    Lista los trabajadores de un condominio.
+    """
+    condominio = get_object_or_404(Condominio, pk=condominio_id)
+    trabajadores = Trabajador.objects.filter(id_condominio=condominio)
+
+    contexto = {
+        'condominio': condominio,
+        'trabajadores': trabajadores
+    }
+    return render(request, 'core/trabajadores_list.html', contexto)
+
+@login_required
+def trabajador_create_view(request, condominio_id):
+    """
+    Vista para registrar un nuevo trabajador.
+    """
+    condominio = get_object_or_404(Condominio, pk=condominio_id)
+
+    if request.method == 'POST':
+        form = TrabajadorForm(request.POST)
+        if form.is_valid():
+            trabajador = form.save(commit=False)
+            trabajador.id_condominio = condominio
+            trabajador.save()
+            messages.success(request, "Trabajador registrado exitosamente.")
+            return redirect('trabajadores_list', condominio_id=condominio.id_condominio)
+    else:
+        form = TrabajadorForm()
+
+    contexto = {
+        'condominio': condominio,
+        'form': form
+    }
+    return render(request, 'core/trabajador_form.html', contexto)
+
+@login_required
+def remuneraciones_list_view(request, condominio_id):
+    """
+    Lista las remuneraciones (sueldos) de un condominio.
+    """
+    condominio = get_object_or_404(Condominio, pk=condominio_id)
+    # Filtramos por trabajadores del condominio
+    remuneraciones = Remuneracion.objects.filter(id_trabajador__id_condominio=condominio).order_by('-periodo')
+
+    contexto = {
+        'condominio': condominio,
+        'remuneraciones': remuneraciones
+    }
+    return render(request, 'core/remuneraciones_list.html', contexto)
+
+@login_required
+def remuneracion_create_view(request, condominio_id):
+    """
+    Vista para registrar una nueva remuneración.
+    """
+    condominio = get_object_or_404(Condominio, pk=condominio_id)
+
+    if request.method == 'POST':
+        form = RemuneracionForm(request.POST, condominio_id=condominio_id)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Remuneración registrada exitosamente.")
+            return redirect('remuneraciones_list', condominio_id=condominio.id_condominio)
+    else:
+        form = RemuneracionForm(condominio_id=condominio_id)
+
+    contexto = {
+        'condominio': condominio,
+        'form': form
+    }
+    return render(request, 'core/remuneracion_form.html', contexto)
+
+# --- FIN: Vistas de RRHH ---

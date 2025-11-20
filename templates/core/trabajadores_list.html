@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Trabajadores - {{ condominio.nombre }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 8px 16px; border: none; cursor: pointer; text-decoration: none; display: inline-block; border-radius: 4px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Trabajadores</h1>
+            <h2>{{ condominio.nombre }}</h2>
+        </div>
+        <div>
+             <a href="{% url 'trabajador_create' condominio.id_condominio %}" class="btn btn-primary">Nuevo Trabajador</a>
+             <a href="{% url 'remuneraciones_list' condominio.id_condominio %}" class="btn btn-secondary">Ver Remuneraciones</a>
+             <a href="{% url 'index' %}" class="btn btn-secondary">Volver al Dashboard</a>
+        </div>
+    </div>
+
+    <hr>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre Completo</th>
+                <th>RUT</th>
+                <th>Cargo</th>
+                <th>Tipo</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trab in trabajadores %}
+            <tr>
+                <td>{{ trab.nombres }} {{ trab.apellidos }}</td>
+                <td>{{ trab.rut_base }}-{{ trab.rut_dv }}</td>
+                <td>{{ trab.cargo }}</td>
+                <td>{{ trab.tipo }}</td>
+                <td>{{ trab.email|default:"-" }}</td>
+                <td>{{ trab.telefono|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No hay trabajadores registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

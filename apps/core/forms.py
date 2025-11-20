@@ -1,5 +1,5 @@
 from django import forms
-from .models import Gasto, Pago, CatMetodoPago
+from .models import Gasto, Pago, CatMetodoPago, Trabajador, Remuneracion
 
 class GastoForm(forms.ModelForm):
     class Meta:
@@ -61,3 +61,41 @@ class PagoForm(forms.ModelForm):
             # Filter units by condominio
             from .models import Unidad
             self.fields['id_unidad'].queryset = Unidad.objects.filter(id_grupo__id_condominio_id=condominio_id)
+
+class TrabajadorForm(forms.ModelForm):
+    class Meta:
+        model = Trabajador
+        fields = ['nombres', 'apellidos', 'rut_base', 'rut_dv', 'cargo', 'email', 'telefono', 'tipo']
+        widgets = {
+            'nombres': forms.TextInput(attrs={'class': 'form-control'}),
+            'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
+            'rut_base': forms.NumberInput(attrs={'class': 'form-control'}),
+            'rut_dv': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '1'}),
+            'cargo': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Planta, Reemplazo'}),
+        }
+
+class RemuneracionForm(forms.ModelForm):
+    class Meta:
+        model = Remuneracion
+        fields = ['id_trabajador', 'periodo', 'tipo', 'bruto', 'imposiciones', 'descuentos', 'liquido', 'fecha_pago', 'id_metodo_pago', 'observacion']
+        widgets = {
+            'id_trabajador': forms.Select(attrs={'class': 'form-control'}),
+            'periodo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'YYYYMM'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'bruto': forms.NumberInput(attrs={'class': 'form-control'}),
+            'imposiciones': forms.NumberInput(attrs={'class': 'form-control'}),
+            'descuentos': forms.NumberInput(attrs={'class': 'form-control'}),
+            'liquido': forms.NumberInput(attrs={'class': 'form-control'}),
+            'fecha_pago': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'id_metodo_pago': forms.Select(attrs={'class': 'form-control'}),
+            'observacion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        condominio_id = kwargs.pop('condominio_id', None)
+        super().__init__(*args, **kwargs)
+        if condominio_id:
+             self.fields['id_trabajador'].queryset = Trabajador.objects.filter(id_condominio_id=condominio_id)

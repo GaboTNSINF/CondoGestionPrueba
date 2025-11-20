@@ -46,7 +46,8 @@
                     <td>
                         <a href="{% url 'gastos_list' condo.id_condominio %}">Gastos</a> |
                         <a href="{% url 'cierre_mensual' condo.id_condominio %}">Cierre</a> |
-                        <a href="{% url 'pagos_list' condo.id_condominio %}">Pagos</a>
+                        <a href="{% url 'pagos_list' condo.id_condominio %}">Pagos</a> |
+                        <a href="{% url 'trabajadores_list' condo.id_condominio %}">RRHH</a>
                     </td>
                 </tr>
                 {% endfor %}
