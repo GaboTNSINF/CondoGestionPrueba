@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Remuneraciones - {{ condominio.nombre }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 8px 16px; border: none; cursor: pointer; text-decoration: none; display: inline-block; border-radius: 4px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Remuneraciones</h1>
+            <h2>{{ condominio.nombre }}</h2>
+        </div>
+        <div>
+             <a href="{% url 'remuneracion_create' condominio.id_condominio %}" class="btn btn-primary">Nueva Liquidación</a>
+             <a href="{% url 'trabajadores_list' condominio.id_condominio %}" class="btn btn-secondary">Volver a Trabajadores</a>
+        </div>
+    </div>
+
+    <hr>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Periodo</th>
+                <th>Trabajador</th>
+                <th>Tipo</th>
+                <th>Sueldo Bruto</th>
+                <th>Imposiciones</th>
+                <th>Descuentos</th>
+                <th>Líquido a Pagar</th>
+                <th>Fecha Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for remu in remuneraciones %}
+            <tr>
+                <td>{{ remu.periodo }}</td>
+                <td>{{ remu.id_trabajador.nombres }} {{ remu.id_trabajador.apellidos }}</td>
+                <td>{{ remu.get_tipo_display }}</td>
+                <td>$ {{ remu.bruto|floatformat:0 }}</td>
+                <td>$ {{ remu.imposiciones|floatformat:0 }}</td>
+                <td>$ {{ remu.descuentos|floatformat:0 }}</td>
+                <td><strong>$ {{ remu.liquido|floatformat:0 }}</strong></td>
+                <td>{{ remu.fecha_pago|date:"d/m/Y"|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center;">No hay remuneraciones registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
